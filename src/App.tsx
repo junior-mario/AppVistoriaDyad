@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import NovaVistoriaPage from "./pages/NovaVistoriaPage";
 import VistoriaDetalhesPage from "./pages/VistoriaDetalhesPage";
 import TodasVistoriasPage from "./pages/TodasVistoriasPage";
+import ReportsPage from "./pages/ReportsPage";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/todas-vistorias" element={<TodasVistoriasPage />} />
             <Route path="/nova-vistoria" element={<NovaVistoriaPage />} />
             <Route path="/vistoria/:id" element={<VistoriaDetalhesPage />} />
+            <Route path="/relatorios" element={<ReportsPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, ListChecks, PlusSquare } from "lucide-react";
+import { LayoutDashboard, ListChecks, PlusSquare, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Layout = () => {
@@ -45,6 +45,18 @@ const Layout = () => {
           >
             <PlusSquare className="h-4 w-4" />
             Nova Vistoria
+          </NavLink>
+          <NavLink
+            to="/relatorios"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-600 transition-all hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
+                isActive && "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white"
+              )
+            }
+          >
+            <BarChart3 className="h-4 w-4" />
+            Relatórios
           </NavLink>
         </nav>
       </aside>
