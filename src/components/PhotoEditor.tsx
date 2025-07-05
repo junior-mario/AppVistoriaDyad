@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 import { Button } from "@/components/ui/button";
-import { Square, Circle, ArrowRight, Undo, Redo, Trash2, Save } from "lucide-react";
+import { Undo, Redo, Trash2, Save } from "lucide-react";
 
 interface PhotoEditorProps {
   imageUrl: string;
@@ -34,6 +34,7 @@ export const PhotoEditor = ({ imageUrl, onSave }: PhotoEditorProps) => {
         backgroundImage={imageUrl}
         strokeWidth={4}
         strokeColor="red"
+        preserveBackgroundImageAspectRatio="xMidYMid meet"
       />
     </div>
   );
