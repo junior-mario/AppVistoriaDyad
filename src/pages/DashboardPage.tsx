@@ -4,6 +4,7 @@ import { PlusCircle, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { mockVistorias } from "../data/mockVistorias";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -16,14 +17,16 @@ const DashboardPage = () => {
 
   const ultimasVistorias = mockVistorias.slice(0, 3);
 
-  const getStatusVariant = (status: string) => {
+  const getStatusClasses = (status: string) => {
     switch (status) {
       case "Concluída":
-        return "default";
+        return "bg-green-100 text-green-800 border-green-200";
+      case "Em Andamento":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "Pendente":
-        return "destructive";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       default:
-        return "secondary";
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -80,7 +83,7 @@ const DashboardPage = () => {
                   <p className="text-sm text-gray-500">{vistoria.endereco}</p>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <Badge variant={getStatusVariant(vistoria.status)}>
+                  <Badge className={cn("hover:bg-opacity-80", getStatusClasses(vistoria.status))}>
                     {vistoria.status}
                   </Badge>
                   <Button variant="outline" size="sm" onClick={() => navigate(`/vistoria/${vistoria.id}`)}>

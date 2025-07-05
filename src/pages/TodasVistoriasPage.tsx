@@ -4,20 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const TodasVistoriasPage = () => {
   const navigate = useNavigate();
 
-  const getStatusVariant = (status: string) => {
+  const getStatusClasses = (status: string) => {
     switch (status) {
       case "Concluída":
-        return "default";
-      case "Pendente":
-        return "destructive";
+        return "bg-green-100 text-green-800 border-green-200";
       case "Em Andamento":
-        return "secondary";
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "Pendente":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       default:
-        return "outline";
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -45,7 +46,7 @@ const TodasVistoriasPage = () => {
                   <TableCell className="font-medium">{vistoria.obra}</TableCell>
                   <TableCell>{new Date(vistoria.data).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(vistoria.status)}>{vistoria.status}</Badge>
+                    <Badge className={cn("hover:bg-opacity-80", getStatusClasses(vistoria.status))}>{vistoria.status}</Badge>
                   </TableCell>
                   <TableCell>{vistoria.responsavel}</TableCell>
                   <TableCell className="text-right">

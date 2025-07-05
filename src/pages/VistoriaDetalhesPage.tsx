@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, Printer, Camera, Paperclip } from "lucide-react";
+import { FileText, Printer, Camera, Paperclip, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { mockVistorias, Vistoria, Photo, VistoriaItem } from "@/data/mockVistorias";
@@ -9,6 +9,7 @@ import { CommentSection } from "@/components/CommentSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PhotoEditor } from "@/components/PhotoEditor";
 
 const PhotoUploader = ({ vistoria, onAddPhoto, closeDialog }: { vistoria: Vistoria, onAddPhoto: (photo: Photo) => void, closeDialog: () => void }) => {
   const [caption, setCaption] = useState("");
@@ -50,35 +51,18 @@ const PhotoUploader = ({ vistoria, onAddPhoto, closeDialog }: { vistoria: Vistor
 
   return (
     <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Adicionar Nova Foto</DialogTitle>
-      </DialogHeader>
+      <DialogHeader><DialogTitle>Adicionar Nova Foto</DialogTitle></DialogHeader>
       <div className="space-y-4 py-4">
         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-        
         {previewUrl ? (
-          <div className="mt-4 text-center">
-            <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-md border" />
-            <Button variant="link" className="mt-2" onClick={() => fileInputRef.current?.click()}>Trocar foto</Button>
-          </div>
+          <div className="mt-4 text-center"><img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-md border" /><Button variant="link" className="mt-2" onClick={() => fileInputRef.current?.click()}>Trocar foto</Button></div>
         ) : (
-          <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-            <Camera className="mr-2 h-4 w-4" /> Selecionar Foto
-          </Button>
+          <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}><Camera className="mr-2 h-4 w-4" /> Selecionar Foto</Button>
         )}
-
         <Input placeholder="Legenda da foto" value={caption} onChange={e => setCaption(e.target.value)} />
         <Select onValueChange={setItemId} value={itemId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Vincular a um item (opcional)" />
-          </SelectTrigger>
-          <SelectContent>
-            {allItems.map(item => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.group}: {item.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
+          <SelectTrigger><SelectValue placeholder="Vincular a um item (opcional)" /></SelectTrigger>
+          <SelectContent>{allItems.map(item => (<SelectItem key={item.id} value={item.id}>{item.group}: {item.nome}</SelectItem>))}</SelectContent>
         </Select>
         <Button onClick={handleAdd} className="w-full" disabled={!selectedFile}>Adicionar Foto à Vistoria</Button>
       </div>
@@ -90,24 +74,18 @@ const VistoriaDetalhesPage = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [vistoria, setVistoria] = useState<Vistoria | null>(null);
-  const [isPhotoUploaderOpen, setIsPhotoUploaderOpen] = useState(false);
+  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
 
   useEffect(() => {
     const foundVistoria = mockVistorias.find(v => v.id === id);
     setVistoria(foundVistoria || null);
   }, [id]);
 
-  if (!vistoria) {
-    return <div>Vistoria não encontrada ou carregando...</div>;
-  }
+  if (!vistoria) return <div>Vistoria não encontrada ou carregando...</div>;
 
   const handleAddComment = (text: string) => {
-    const newComment = {
-      id: `c${Date.now()}`,
-      user: "Eng. Ana", // Mocked user
-      text,
-      timestamp: new Date().toISOString(),
-    };
+    const newComment = { id: `c${Date.now()}`, user: "Eng. Ana", text, timestamp: new Date().toISOString() };
     setVistoria(prev => prev ? { ...prev, comments: [...prev.comments, newComment] } : null);
     toast({ title: "Comentário adicionado!" });
   };
@@ -115,6 +93,17 @@ const VistoriaDetalhesPage = () => {
   const handleAddPhoto = (photo: Photo) => {
     setVistoria(prev => prev ? { ...prev, photos: [...prev.photos, photo] } : null);
     toast({ title: "Foto adicionada com sucesso!" });
+  };
+
+  const handleSaveAnnotation = (newImageData: string) => {
+    if (!editingPhoto) return;
+    setVistoria(prev => {
+      if (!prev) return null;
+      const updatedPhotos = prev.photos.map(p => p.id === editingPhoto.id ? { ...p, url: newImageData } : p);
+      return { ...prev, photos: updatedPhotos };
+    });
+    setEditingPhoto(null);
+    toast({ title: "Anotações salvas!" });
   };
 
   const renderStatusBadge = (status: string) => {
@@ -127,18 +116,10 @@ const VistoriaDetalhesPage = () => {
   const renderItemPhotos = (itemId: string) => {
     const itemPhotos = vistoria.photos.filter(p => p.itemId === itemId);
     if (itemPhotos.length === 0) return null;
-
     return (
       <div className="mt-2 pl-4">
         <h4 className="text-sm font-semibold mb-2 text-gray-600">Fotos Vinculadas:</h4>
-        <div className="flex gap-2 flex-wrap">
-          {itemPhotos.map(photo => (
-            <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer" className="block w-24">
-              <img src={photo.url} alt={photo.caption} className="rounded-md object-cover h-16 w-24 border" />
-              <p className="text-xs truncate mt-1">{photo.caption}</p>
-            </a>
-          ))}
-        </div>
+        <div className="flex gap-2 flex-wrap">{itemPhotos.map(photo => (<div key={photo.id} className="block w-24 cursor-pointer" onClick={() => setEditingPhoto(photo)}><img src={photo.url} alt={photo.caption} className="rounded-md object-cover h-16 w-24 border" /><p className="text-xs truncate mt-1">{photo.caption}</p></div>))}</div>
       </div>
     );
   };
@@ -148,9 +129,7 @@ const VistoriaDetalhesPage = () => {
       <h3 className="font-semibold mt-4 text-lg">{title}</h3>
       {items.map((item) => (
         <div key={item.id} className="border-t pt-3 mt-3">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">{item.nome}</span> {renderStatusBadge(item.status)}
-          </div>
+          <div className="flex justify-between items-center"><span className="font-medium">{item.nome}</span> {renderStatusBadge(item.status)}</div>
           <p className="text-sm text-gray-600 pl-2 mt-1">- {item.observacoes || "Sem observações."}</p>
           {renderItemPhotos(item.id)}
         </div>
@@ -160,59 +139,25 @@ const VistoriaDetalhesPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Detalhes da Vistoria</h1>
-        <div className="flex space-x-2">
-          <Button variant="outline"><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
-        </div>
-      </div>
-
+      <div className="flex justify-between items-center"><h1 className="text-3xl font-bold text-gray-800">Detalhes da Vistoria</h1><div className="flex space-x-2"><Button variant="outline"><Printer className="mr-2 h-4 w-4" /> Imprimir</Button></div></div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <p><strong>Obra:</strong> {vistoria.obra}</p>
-              <p><strong>Endereço:</strong> {vistoria.endereco}</p>
-              <p><strong>Observações:</strong> {vistoria.observacoesGerais || "Nenhuma"}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Itens Vistoriados</CardTitle></CardHeader>
-            <CardContent>
-              {renderItems("Estrutural", vistoria.itensEstrutural)}
-              {renderItems("Hidráulica", vistoria.itensHidraulica)}
-              {renderItems("Elétrica", vistoria.itensEletrica)}
-            </CardContent>
-          </Card>
-          
+          <Card><CardHeader><CardTitle>Informações Gerais</CardTitle></CardHeader><CardContent className="space-y-2"><p><strong>Obra:</strong> {vistoria.obra}</p><p><strong>Endereço:</strong> {vistoria.endereco}</p><p><strong>Observações:</strong> {vistoria.observacoesGerais || "Nenhuma"}</p></CardContent></Card>
+          <Card><CardHeader><CardTitle>Itens Vistoriados</CardTitle></CardHeader><CardContent>{renderItems("Estrutural", vistoria.itensEstrutural)}{renderItems("Hidráulica", vistoria.itensHidraulica)}{renderItems("Elétrica", vistoria.itensEletrica)}</CardContent></Card>
           <CommentSection comments={vistoria.comments} onAddComment={handleAddComment} />
         </div>
-
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Registro Fotográfico</span>
-                <Dialog open={isPhotoUploaderOpen} onOpenChange={setIsPhotoUploaderOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm"><Camera className="mr-2 h-4 w-4" /> Adicionar</Button>
-                  </DialogTrigger>
-                  <PhotoUploader vistoria={vistoria} onAddPhoto={handleAddPhoto} closeDialog={() => setIsPhotoUploaderOpen(false)} />
-                </Dialog>
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex justify-between items-center"><span>Registro Fotográfico</span><Dialog open={isUploaderOpen} onOpenChange={setIsUploaderOpen}><DialogTrigger asChild><Button size="sm"><Camera className="mr-2 h-4 w-4" /> Adicionar</Button></DialogTrigger><PhotoUploader vistoria={vistoria} onAddPhoto={handleAddPhoto} closeDialog={() => setIsUploaderOpen(false)} /></Dialog></CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {vistoria.photos.length > 0 ? vistoria.photos.map((photo) => (
-                <div key={photo.id} className="border rounded-lg p-2">
+                <div key={photo.id} className="border rounded-lg p-2 group relative">
                   <img src={photo.url} alt={photo.caption} className="w-full h-32 object-cover rounded-md mb-2" />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center transition-all duration-300">
+                    <Button variant="outline" size="sm" className="opacity-0 group-hover:opacity-100" onClick={() => setEditingPhoto(photo)}><Edit className="mr-2 h-4 w-4" /> Anotar</Button>
+                  </div>
                   <p className="text-sm font-medium">{photo.caption || "Sem descrição"}</p>
-                  {photo.location && (
-                    <p className="text-xs text-gray-500">
-                      Lat: {photo.location.lat.toFixed(4)}, Lon: {photo.location.lng.toFixed(4)}
-                    </p>
-                  )}
+                  {photo.location && (<p className="text-xs text-gray-500">Lat: {photo.location.lat.toFixed(4)}, Lon: {photo.location.lng.toFixed(4)}</p>)}
                   {photo.itemId && <p className="text-xs text-blue-600 flex items-center gap-1"><Paperclip size={12} /> Vinculada</p>}
                 </div>
               )) : <p className="text-sm text-gray-500">Nenhuma foto registrada.</p>}
@@ -220,6 +165,12 @@ const VistoriaDetalhesPage = () => {
           </Card>
         </div>
       </div>
+      <Dialog open={!!editingPhoto} onOpenChange={(isOpen) => !isOpen && setEditingPhoto(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader><DialogTitle>Anotar na Foto</DialogTitle></DialogHeader>
+          {editingPhoto && <PhotoEditor imageUrl={editingPhoto.url} onSave={handleSaveAnnotation} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
