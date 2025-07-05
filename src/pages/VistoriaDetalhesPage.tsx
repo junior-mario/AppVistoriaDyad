@@ -1,22 +1,21 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { mockVistorias } from "../data/mockVistorias";
 
 const VistoriaDetalhesPage = () => {
   const { id } = useParams();
-  const location = useLocation();
   const { toast } = useToast();
   
-  // In a real app, you'd fetch this by ID. Here we get it from navigation state.
-  const vistoria = location.state?.vistoria;
+  const vistoria = mockVistorias.find(v => v.id === id);
 
   if (!vistoria) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Erro</h1>
-        <p className="text-gray-600 mt-2">Dados da vistoria não encontrados. Por favor, inicie uma nova vistoria.</p>
+        <h1 className="text-2xl font-bold text-red-600">Vistoria não encontrada</h1>
+        <p className="text-gray-600 mt-2">Não foi possível encontrar os dados para a vistoria com ID: {id}</p>
       </div>
     );
   }
