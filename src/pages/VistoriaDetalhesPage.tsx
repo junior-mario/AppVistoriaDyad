@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Printer, Camera, Paperclip } from "lucide-react";
+import { FileText, Printer, Camera, Paperclip } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { mockVistorias, Vistoria, Photo, VistoriaItem } from "@/data/mockVistorias";
@@ -10,24 +10,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const PhotoUploader = ({ vistoria, onAddPhoto }: { vistoria: Vistoria, onAddPhoto: (photo: Photo) => void }) => {
+const PhotoUploader = ({ vistoria, onAddPhoto, closeDialog }: { vistoria: Vistoria, onAddPhoto: (photo: Photo) => void, closeDialog: () => void }) => {
   const [caption, setCaption] = useState("");
   const [itemId, setItemId] = useState<string | undefined>();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
   const allItems = [
     ...vistoria.itensEstrutural.map(item => ({ ...item, group: "Estrutural" })),
     ...vistoria.itensHidraulica.map(item => ({ ...item, group: "Hidráulica" })),
     ...vistoria.itensEletrica.map(item => ({ ...item, group: "Elétrica" })),
   ];
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleAdd = () => {
+    if (!selectedFile || !previewUrl) {
+      toast({ title: "Nenhuma foto selecionada", description: "Por favor, escolha um arquivo de imagem.", variant: "destructive" });
+      return;
+    }
     const newPhoto: Photo = {
       id: Date.now(),
       caption,
       itemId,
-      url: `https://picsum.photos/seed/${Date.now()}/400/300`,
+      url: previewUrl,
       timestamp: new Date().toISOString(),
     };
     onAddPhoto(newPhoto);
+    closeDialog();
   };
 
   return (
@@ -36,6 +54,19 @@ const PhotoUploader = ({ vistoria, onAddPhoto }: { vistoria: Vistoria, onAddPhot
         <DialogTitle>Adicionar Nova Foto</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 py-4">
+        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+        
+        {previewUrl ? (
+          <div className="mt-4 text-center">
+            <img src={previewUrl} alt="Preview" className="w-full h-48 object-cover rounded-md border" />
+            <Button variant="link" className="mt-2" onClick={() => fileInputRef.current?.click()}>Trocar foto</Button>
+          </div>
+        ) : (
+          <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+            <Camera className="mr-2 h-4 w-4" /> Selecionar Foto
+          </Button>
+        )}
+
         <Input placeholder="Legenda da foto" value={caption} onChange={e => setCaption(e.target.value)} />
         <Select onValueChange={setItemId} value={itemId}>
           <SelectTrigger>
@@ -49,7 +80,7 @@ const PhotoUploader = ({ vistoria, onAddPhoto }: { vistoria: Vistoria, onAddPhot
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={handleAdd} className="w-full">Adicionar Foto</Button>
+        <Button onClick={handleAdd} className="w-full" disabled={!selectedFile}>Adicionar Foto à Vistoria</Button>
       </div>
     </DialogContent>
   );
@@ -59,6 +90,7 @@ const VistoriaDetalhesPage = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [vistoria, setVistoria] = useState<Vistoria | null>(null);
+  const [isPhotoUploaderOpen, setIsPhotoUploaderOpen] = useState(false);
 
   useEffect(() => {
     const foundVistoria = mockVistorias.find(v => v.id === id);
@@ -98,11 +130,11 @@ const VistoriaDetalhesPage = () => {
 
     return (
       <div className="mt-2 pl-4">
-        <h4 className="text-sm font-semibold mb-2">Fotos Vinculadas:</h4>
+        <h4 className="text-sm font-semibold mb-2 text-gray-600">Fotos Vinculadas:</h4>
         <div className="flex gap-2 flex-wrap">
           {itemPhotos.map(photo => (
             <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer" className="block w-24">
-              <img src={photo.url} alt={photo.caption} className="rounded-md object-cover h-16 w-24" />
+              <img src={photo.url} alt={photo.caption} className="rounded-md object-cover h-16 w-24 border" />
               <p className="text-xs truncate mt-1">{photo.caption}</p>
             </a>
           ))}
@@ -113,13 +145,13 @@ const VistoriaDetalhesPage = () => {
 
   const renderItems = (title: string, items: VistoriaItem[]) => (
     <div>
-      <h3 className="font-semibold mt-4">{title}</h3>
+      <h3 className="font-semibold mt-4 text-lg">{title}</h3>
       {items.map((item) => (
-        <div key={item.id} className="border-t pt-2 mt-2">
-          <div className="flex justify-between">
-            <span>{item.nome}</span> {renderStatusBadge(item.status)}
+        <div key={item.id} className="border-t pt-3 mt-3">
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{item.nome}</span> {renderStatusBadge(item.status)}
           </div>
-          <p className="text-sm text-gray-600 pl-2">- {item.observacoes || "Sem observações."}</p>
+          <p className="text-sm text-gray-600 pl-2 mt-1">- {item.observacoes || "Sem observações."}</p>
           {renderItemPhotos(item.id)}
         </div>
       ))}
@@ -163,11 +195,11 @@ const VistoriaDetalhesPage = () => {
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <span>Registro Fotográfico</span>
-                <Dialog>
+                <Dialog open={isPhotoUploaderOpen} onOpenChange={setIsPhotoUploaderOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm"><Camera className="mr-2 h-4 w-4" /> Adicionar</Button>
                   </DialogTrigger>
-                  <PhotoUploader vistoria={vistoria} onAddPhoto={handleAddPhoto} />
+                  <PhotoUploader vistoria={vistoria} onAddPhoto={handleAddPhoto} closeDialog={() => setIsPhotoUploaderOpen(false)} />
                 </Dialog>
               </CardTitle>
             </CardHeader>
