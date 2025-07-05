@@ -1,3 +1,27 @@
+export type Comment = {
+  id: string;
+  user: string;
+  text: string;
+  timestamp: string;
+};
+
+export type Photo = {
+  id: number;
+  caption: string;
+  url: string;
+  location?: { lat: number; lng: number };
+  timestamp: string;
+  itemId?: string; // Links to VistoriaItem.id
+};
+
+export type VistoriaItem = { 
+  id: string; 
+  nome: string; 
+  status: string; 
+  observacoes: string; 
+  descricao?: string; 
+};
+
 export type Vistoria = {
   id: string;
   obra: string;
@@ -6,10 +30,11 @@ export type Vistoria = {
   status: "Pendente" | "Concluída" | "Em Andamento";
   responsavel: string;
   observacoesGerais: string;
-  itensEstrutural: { id: string; nome: string; status: string; observacoes: string; }[];
-  itensHidraulica: { id: string; nome: string; status: string; observacoes: string; }[];
-  itensEletrica: { id: string; nome: string; status: string; observacoes: string; }[];
-  photos: { id: number; caption: string; location?: { lat: number; lng: number }; }[];
+  itensEstrutural: VistoriaItem[];
+  itensHidraulica: VistoriaItem[];
+  itensEletrica: VistoriaItem[];
+  photos: Photo[];
+  comments: Comment[];
 };
 
 export const mockVistorias: Vistoria[] = [
@@ -18,13 +43,16 @@ export const mockVistorias: Vistoria[] = [
     obra: "Obra Residencial #1",
     endereco: "Av. Paulista, 1001 - São Paulo/SP",
     data: "2024-07-20",
-    status: "Pendente",
+    status: "Em Andamento",
     responsavel: "João Silva",
     observacoesGerais: "Iniciando a vistoria.",
-    itensEstrutural: [],
-    itensHidraulica: [],
-    itensEletrica: [],
-    photos: []
+    itensEstrutural: [{ id: 'est1', nome: 'Fundações', status: 'Pendente', observacoes: '' }],
+    itensHidraulica: [{ id: 'hid1', nome: 'Tubulação', status: 'Pendente', observacoes: '' }],
+    itensEletrica: [{ id: 'ele1', nome: 'Quadro Geral', status: 'Pendente', observacoes: '' }],
+    photos: [],
+    comments: [
+      { id: 'c1', user: 'Eng. Maria', text: 'Início da vistoria. Tudo parece em ordem.', timestamp: '2024-07-20T09:00:00Z' }
+    ]
   },
   {
     id: "2",
@@ -37,19 +65,12 @@ export const mockVistorias: Vistoria[] = [
     itensEstrutural: [{ id: 'es1', nome: 'Fundações', status: 'Aprovado', observacoes: 'OK' }],
     itensHidraulica: [{ id: 'hi1', nome: 'Encanamento', status: 'Reprovado', observacoes: 'Vazamento no banheiro do 2º andar.' }],
     itensEletrica: [{ id: 'el1', nome: 'Quadro de Força', status: 'Aprovado', observacoes: 'OK' }],
-    photos: [{ id: 1, caption: 'Vazamento', location: { lat: -23.54, lng: -46.64 } }]
+    photos: [
+      { id: 1, caption: 'Vazamento encontrado', url: 'https://picsum.photos/seed/vazamento/400/300', location: { lat: -23.54, lng: -46.64 }, timestamp: '2024-07-18T14:30:00Z', itemId: 'hi1' }
+    ],
+    comments: [
+      { id: 'c2', user: 'Eng. Maria', text: 'Encontrado vazamento na hidráulica. Foto anexada.', timestamp: '2024-07-18T14:32:00Z' },
+      { id: 'c3', user: 'Eng. João', text: 'Reparo agendado para amanhã.', timestamp: '2024-07-18T16:00:00Z' }
+    ]
   },
-  {
-    id: "3",
-    obra: "Reforma Apartamento 303",
-    endereco: "Alameda Santos, 200 - São Paulo/SP",
-    data: "2024-07-15",
-    status: "Concluída",
-    responsavel: "João Silva",
-    observacoesGerais: "Tudo conforme o projeto.",
-    itensEstrutural: [{ id: 'es1', nome: 'Paredes', status: 'Aprovado', observacoes: 'OK' }],
-    itensHidraulica: [{ id: 'hi1', nome: 'Torneiras', status: 'Aprovado', observacoes: 'OK' }],
-    itensEletrica: [{ id: 'el1', nome: 'Tomadas', status: 'Aprovado', observacoes: 'OK' }],
-    photos: []
-  }
 ];
