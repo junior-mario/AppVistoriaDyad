@@ -1,6 +1,12 @@
+import { useRef, useState } from "react";
 import { Vistoria, VistoriaItem } from "@/data/mockVistorias";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { useToast } from "@/components/ui/use-toast";
 
 interface IndividualReportProps {
   vistoria: Vistoria;
@@ -31,6 +37,29 @@ const renderItems = (title: string, items: VistoriaItem[]) => (
 );
 
 export const IndividualReport = ({ vistoria }: IndividualReportProps) => {
+  const reportCardRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handleExport = () => {
+    const input = reportCardRef.current;
+    if (!input) return;
+
+    setIsExporting(true);
+    toast({ title: "Gerando PDF do relatório..." });
+
+    html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 10, 10, pdfWidth - 20, imgHeight - 20);
+      pdf.save(`relatorio-${vistoria.obra.replace(/\s+/g, '_')}.pdf`);
+      setIsExporting(false);
+    });
+  };
+
   const allItems = [
     ...vistoria.itensEstrutural,
     ...vistoria.itensHidraulica,
@@ -40,12 +69,18 @@ export const IndividualReport = ({ vistoria }: IndividualReportProps) => {
   const rejectedCount = allItems.filter(i => i.status === "Reprovado").length;
 
   return (
-    <Card className="mt-6 border-t-4 border-blue-500">
-      <CardHeader>
-        <CardTitle>Relatório Detalhado: {vistoria.obra}</CardTitle>
-        <CardDescription>
-          {vistoria.endereco} - Realizada em {new Date(vistoria.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-        </CardDescription>
+    <Card ref={reportCardRef} className="mt-6 border-t-4 border-blue-500 bg-white p-4">
+      <CardHeader className="flex flex-row items-start justify-between">
+        <div>
+          <CardTitle>Relatório Detalhado: {vistoria.obra}</CardTitle>
+          <CardDescription>
+            {vistoria.endereco} - Realizada em {new Date(vistoria.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+          </CardDescription>
+        </div>
+        <Button onClick={handleExport} disabled={isExporting} size="sm" variant="outline">
+          {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+          Exportar
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">

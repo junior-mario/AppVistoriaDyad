@@ -28,18 +28,21 @@ const ReportsPage = () => {
     return acc;
   }, [] as { name: string; value: number }[]);
 
-  const COLORS = { "Concluída": "hsl(var(--chart-2))", "Em Andamento": "hsl(var(--chart-1))", "Pendente": "hsl(var(--chart-3))" };
+  const STATUS_COLORS = {
+    "Concluída": "#22c55e", // green-500
+    "Em Andamento": "#3b82f6", // blue-500
+    "Pendente": "#f59e0b", // amber-500
+  };
+  const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
-  // Data for Non-conformities by Area Bar Chart
-  const nonConformities = mockVistorias.flatMap(v => [...v.itensEstrutural, ...v.itensHidraulica, ...v.itensEletrica])
-    .filter(item => item.status === "Reprovado")
-    .reduce((acc, item) => {
-      const area = item.id.startsWith('est') ? "Estrutural" : item.id.startsWith('hid') ? "Hidráulica" : "Elétrica";
-      const existing = acc.find(d => d.area === area);
-      if (existing) existing.count += 1;
-      else acc.push({ area: area, count: 1 });
-      return acc;
-    }, [] as { area: string; count: number }[]);
+  // Data for Non-conformities by Obra Pie Chart
+  const nonConformitiesByObra = mockVistorias
+    .map(vistoria => {
+      const reprovados = [...vistoria.itensEstrutural, ...vistoria.itensHidraulica, ...vistoria.itensEletrica]
+        .filter(item => item.status === "Reprovado").length;
+      return { name: vistoria.obra, value: reprovados };
+    })
+    .filter(item => item.value > 0);
 
   // Data for Vistorias by Month Bar Chart
   const vistoriasByMonth = mockVistorias.reduce((acc, vistoria) => {
@@ -109,22 +112,24 @@ const ReportsPage = () => {
                 <PieChart>
                   <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                   <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`}>
-                    {statusData.map((entry) => <Cell key={entry.name} fill={COLORS[entry.name as keyof typeof COLORS]} />)}
+                    {statusData.map((entry) => <Cell key={entry.name} fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS]} />)}
                   </Pie>
                   <Legend />
                 </PieChart>
               </ChartContainer>
             </div>
             <div className="flex flex-col items-center">
-              <h3 className="font-semibold mb-4">Não Conformidades por Área</h3>
-              <ChartContainer config={{}} className="h-[250px] w-full">
-                <BarChart data={nonConformities} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="area" tickLine={false} tickMargin={10} axisLine={false} />
-                  <YAxis />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="hsl(var(--destructive))" radius={8} />
-                </BarChart>
+              <h3 className="font-semibold mb-4">Não Conformidades por Obra</h3>
+              <ChartContainer config={{}} className="mx-auto aspect-square h-[250px]">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                  <Pie data={nonConformitiesByObra} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                     {nonConformitiesByObra.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                </PieChart>
               </ChartContainer>
             </div>
           </CardContent>
@@ -142,7 +147,7 @@ const ReportsPage = () => {
                 <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
                 <YAxis allowDecimals={false} />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                <Bar dataKey="total" fill="hsl(var(--chart-1))" radius={8} />
+                <Bar dataKey="total" fill="#334155" radius={8} />
               </BarChart>
             </ChartContainer>
           </CardContent>
