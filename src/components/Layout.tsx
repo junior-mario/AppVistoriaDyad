@@ -1,8 +1,18 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, ListChecks, PlusSquare, BarChart3 } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { LayoutDashboard, ListChecks, PlusSquare, BarChart3, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { Button } from "./ui/button";
 
 const Layout = () => {
+  const supabaseClient = useSupabaseClient();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabaseClient.auth.signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-gray-100 dark:bg-gray-900">
       <aside className="hidden w-64 flex-shrink-0 border-r bg-white dark:bg-gray-800 md:flex md:flex-col">
@@ -59,6 +69,12 @@ const Layout = () => {
             Relatórios
           </NavLink>
         </nav>
+        <div className="mt-auto border-t p-4">
+          <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-gray-600 transition-all hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
+        </div>
       </aside>
       <main className="flex-1 flex flex-col">
         <div className="flex-1 p-4 md:p-8 overflow-auto">

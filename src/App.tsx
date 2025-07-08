@@ -11,6 +11,8 @@ import VistoriaDetalhesPage from "./pages/VistoriaDetalhesPage";
 import TodasVistoriasPage from "./pages/TodasVistoriasPage";
 import ReportsPage from "./pages/ReportsPage";
 import Layout from "./components/Layout";
+import LoginPage from "./pages/LoginPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -22,13 +24,16 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<LoginPage />} />
           
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/todas-vistorias" element={<TodasVistoriasPage />} />
-            <Route path="/nova-vistoria" element={<NovaVistoriaPage />} />
-            <Route path="/vistoria/:id" element={<VistoriaDetalhesPage />} />
-            <Route path="/relatorios" element={<ReportsPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/todas-vistorias" element={<TodasVistoriasPage />} />
+              <Route path="/nova-vistoria" element={<NovaVistoriaPage />} />
+              <Route path="/vistoria/:id" element={<VistoriaDetalhesPage />} />
+              <Route path="/relatorios" element={<ReportsPage />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />
