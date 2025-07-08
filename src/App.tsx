@@ -13,6 +13,8 @@ import ReportsPage from "./pages/ReportsPage";
 import Layout from "./components/Layout";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
+import UserManagementPage from "@/pages/admin/UserManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,10 @@ const App = () => (
               <Route path="/nova-vistoria" element={<NovaVistoriaPage />} />
               <Route path="/vistoria/:id" element={<VistoriaDetalhesPage />} />
               <Route path="/relatorios" element={<ReportsPage />} />
+
+              <Route element={<AdminProtectedRoute />}>
+                <Route path="/admin/users" element={<UserManagementPage />} />
+              </Route>
             </Route>
           </Route>
 
