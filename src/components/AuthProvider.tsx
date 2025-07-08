@@ -1,10 +1,10 @@
 "use client"
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs'
 import { SessionContextProvider } from '@supabase/auth-helpers-react'
 import { useState } from 'react'
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [supabaseClient] = useState(() => createClientComponentClient())
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient())
   
   return (
     <SessionContextProvider supabaseClient={supabaseClient}>
